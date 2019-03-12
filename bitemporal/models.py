@@ -27,6 +27,8 @@ class BitemporalQuerySet(query.QuerySet):
 class BitemporalManager(models.Manager):
     """Model manager for bitemporal models."""
 
+    use_in_migrations = True
+
     def get_query_set(self):
         """Return an instance of `BitemporalQuerySet`."""
         return BitemporalQuerySet(self.model, using=self._db)
