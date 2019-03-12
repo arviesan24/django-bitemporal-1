@@ -1,6 +1,7 @@
 """Models for bitemporal objects."""
 
 from django.db import models
+from django.db.models import manager
 from django.db.models import query
 
 
@@ -24,26 +25,10 @@ class BitemporalQuerySet(query.QuerySet):
         return self.filter(condition)
 
 
-class BitemporalManager(models.Manager):
+class BitemporalManager(manager.BaseManager.from_queryset(BitemporalQuerySet)):
     """Model manager for bitemporal models."""
 
     use_in_migrations = True
-
-    def get_query_set(self):
-        """Return an instance of `BitemporalQuerySet`."""
-        return BitemporalQuerySet(self.model, using=self._db)
-
-    #
-    # Proxies to queryset
-    #
-
-    def valid(self):
-        """Return queryset filtered to current valid objects."""
-        return self.get_query_set().valid()
-
-    def valid_on(self, date_time):
-        """Return queryset filtered to objects valid on given datetime."""
-        return self.get_query_set().valid_on(date_time)
 
 
 class BitemporalModel(models.Model):
