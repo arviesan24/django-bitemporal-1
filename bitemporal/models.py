@@ -1,8 +1,10 @@
 """Models for bitemporal objects."""
 
 from django.db import models
+from django.db import transaction
 from django.db.models import manager
 from django.db.models import query
+from django.utils import timezone
 
 
 class BitemporalQuerySet(query.QuerySet):
@@ -23,6 +25,32 @@ class BitemporalQuerySet(query.QuerySet):
                 valid_datetime_end__isnull=True)
         )
         return self.filter(condition)
+
+    def supersede(self, values, **kwargs):
+        """Supersede the object that matched **kwargs with provided values."""
+        lookup, params = self._extract_model_params(values, **kwargs)
+        with transaction.atomic(using=self.db):
+            # datetime the superseding obj will supersede
+            cutoff_datetime = params.get(
+                'valid_datetime_start', timezone.now())
+            curr_obj = self.select_for_update().valid().get(**lookup)
+
+            # invalidate existing instance
+            curr_obj.valid_datetime_end = cutoff_datetime
+            curr_obj.save(update_fields=['valid_datetime_end'])
+
+            # create superseding instance
+            sup_obj = curr_obj
+            sup_obj.pk = None
+            sup_obj.valid_datetime_start = cutoff_datetime
+            sup_obj.valid_datetime_end = None
+            sup_obj.transaction_datetime_start = None
+            sup_obj.transaction_datetime_end = None
+            for k, v in params.items():
+                setattr(sup_obj, k, v() if callable(v) else v)
+            sup_obj.save()
+
+        return sup_obj
 
 
 class BitemporalManager(manager.BaseManager.from_queryset(BitemporalQuerySet)):
