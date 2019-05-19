@@ -16,7 +16,7 @@ class BitemporalQuerySet(query.QuerySet):
 
     def valid_on(self, date_time):
         """Return objects that were valid on the given datetime."""
-        condition = (
+        validity_conditions = (
             models.Q(
                 valid_datetime_start__lte=date_time,
                 valid_datetime_end__gt=date_time) |
@@ -24,7 +24,7 @@ class BitemporalQuerySet(query.QuerySet):
                 valid_datetime_start__lte=date_time,
                 valid_datetime_end__isnull=True)
         )
-        return self.filter(condition)
+        return self.filter(validity_conditions)
 
     def supersede(self, values, **kwargs):
         """Supersede the object that matched **kwargs with provided values."""
