@@ -17,7 +17,7 @@ class BitemporalQuerySet(query.QuerySet):
         condition = (
             models.Q(
                 valid_datetime_start__lte=date_time,
-                valid_datetime_end__gte=date_time) |
+                valid_datetime_end__gt=date_time) |
             models.Q(
                 valid_datetime_start__lte=date_time,
                 valid_datetime_end__isnull=True)
