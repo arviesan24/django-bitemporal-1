@@ -12,7 +12,7 @@ class BitemporalQuerySet(query.QuerySet):
 
     def valid(self):
         """Return objects that are currently valid."""
-        return self.filter(valid_datetime_end__isnull=True)
+        return self.valid_on(timezone.now())
 
     def valid_on(self, date_time):
         """Return objects that were valid on the given datetime."""
