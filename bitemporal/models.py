@@ -36,7 +36,7 @@ class BitemporalQuerySet(query.QuerySet):
                 'valid_datetime_start', timezone.now())
             curr_obj = self.select_for_update().valid().get(**lookup)
 
-            # invalidate existing instance
+            # obsolesce existing instance
             curr_obj.valid_datetime_end = cutoff_datetime
             curr_obj.save(update_fields=['valid_datetime_end'])
 
