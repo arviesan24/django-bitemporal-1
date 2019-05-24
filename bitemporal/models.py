@@ -24,7 +24,8 @@ class BitemporalQuerySet(query.QuerySet):
                 valid_datetime_start__lte=date_time,
                 valid_datetime_end__isnull=True)
         )
-        return self.filter(validity_conditions)
+        return self.filter(
+            validity_conditions, transaction_datetime_end__isnull=True)
 
     def supersede(self, values, **kwargs):
         """Supersede the object that matched **kwargs with provided values."""
