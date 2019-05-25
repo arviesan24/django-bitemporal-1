@@ -7,6 +7,7 @@ from django.db.models import query
 from django.utils import timezone
 
 from .exceptions import BitemporalObjectAlreadySuperseded
+from .exceptions import BitemporalObjectAlreadySupplanted
 
 
 class BitemporalQuerySet(query.QuerySet):
@@ -67,6 +68,30 @@ class BitemporalQuerySet(query.QuerySet):
             sup_obj.save()
 
         return sup_obj
+
+    def supplant(self, values, **kwargs):
+        """Replace object by invalidating it and creating a new one."""
+        lookup, params = self._extract_model_params(values, **kwargs)
+        with transaction.atomic(using=self.db):
+            matched_obj = self.select_for_update().get(**lookup)
+
+            if matched_obj.transaction_datetime_end is not None:
+                raise BitemporalObjectAlreadySupplanted(matched_obj)
+
+            # invalidate matched instance
+            matched_obj.transaction_datetime_end = timezone.now()
+            matched_obj.save(update_fields=['transaction_datetime_end'])
+
+            # new instance
+            new_obj = matched_obj
+            new_obj.pk = None
+            new_obj.transaction_datetime_start = None
+            new_obj.transaction_datetime_end = None
+            for k, v in params.items():
+                setattr(new_obj, k, v() if callable(v) else v)
+            new_obj.save()
+
+        return new_obj
 
 
 class BitemporalManager(manager.BaseManager.from_queryset(BitemporalQuerySet)):
