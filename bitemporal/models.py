@@ -107,7 +107,7 @@ class BitemporalModel(models.Model):
     valid_datetime_end = models.DateTimeField(
         blank=True, null=True, db_index=True)
     transaction_datetime_start = models.DateTimeField(
-        auto_now_add=True, db_index=True)
+        default=timezone.now, db_index=True)
     transaction_datetime_end = models.DateTimeField(
         blank=True, null=True, db_index=True)
 
