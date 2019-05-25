@@ -9,3 +9,13 @@ class BitemporalObjectAlreadySuperseded(Exception):
         super().__init__(
             'Bitemporal object {} is already superseded and can no '
             'longer be superseded.'.format(obj))
+
+
+class BitemporalObjectAlreadySupplanted(Exception):
+    """Exception raised when bitemporal object is already supplanted."""
+
+    def __init__(self, obj):
+        """Initialize exception with the already supplanted object."""
+        super().__init__(
+            'Bitemporal object {} is already supplanted and can no '
+            'longer be supplanted.'.format(obj))
