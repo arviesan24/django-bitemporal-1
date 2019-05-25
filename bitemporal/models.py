@@ -6,6 +6,8 @@ from django.db.models import manager
 from django.db.models import query
 from django.utils import timezone
 
+from .exceptions import BitemporalObjectAlreadySuperseded
+
 
 class BitemporalQuerySet(query.QuerySet):
     """QuerySet for bitemporal model managers."""
@@ -35,6 +37,19 @@ class BitemporalQuerySet(query.QuerySet):
             cutoff_datetime = params.get(
                 'valid_datetime_start', timezone.now())
             curr_obj = self.select_for_update().valid().get(**lookup)
+
+            # Check if current object is already superseded.
+            # The object is superseded if its `valid_datetime_end` is
+            # already set, and a similar object exists with
+            # `valid_datetime_start` is on or after this object's
+            # `valid_datetime_end`
+            if (curr_obj.valid_datetime_end is not None
+                    and self.filter(**lookup)
+                        .filter(
+                            valid_datetime_start__gte=(
+                                curr_obj.valid_datetime_end))
+                        .exists()):
+                raise BitemporalObjectAlreadySuperseded(curr_obj)
 
             # obsolesce existing instance
             curr_obj.valid_datetime_end = cutoff_datetime
